@@ -140,7 +140,11 @@ func (s *Friend) Accept(userID, friendID string) (*models.FriendView, error) {
 		return nil, httpx.NewForbidden("only the recipient can accept this request")
 	}
 	if row.Status == models.FriendAccepted {
-		return s.view(&row, userID)
+		view, viewErr := s.view(&row, userID)
+		if viewErr != nil {
+			return nil, viewErr
+		}
+		return &view, nil
 	}
 
 	err = s.deps.DB.Transaction(func(tx *gorm.DB) error {

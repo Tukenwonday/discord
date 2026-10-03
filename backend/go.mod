@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/livekit/protocol v1.28.1
+	github.com/livekit/server-sdk-go v1.9.0
 	github.com/minio/minio-go/v7 v7.0.76
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rs/zerolog v1.32.0

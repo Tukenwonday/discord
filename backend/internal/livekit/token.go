@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/cordis/backend/internal/config"
-	"github.com/livekit/protocol/auth"
-	"github.com/livekit/protocol/livekit"
+	lksdk "github.com/livekit/server-sdk-go"
 )
 
 // TokenTTL is the lifetime of a minted token; the contract reports 3600.
@@ -50,19 +49,24 @@ func New(cfg config.LiveKit) *Service {
 func (s *Service) URL() string { return s.url }
 
 // Issue mints a signed access token for a room.
+//
+// The server-sdk-go facade is used instead of reaching into
+// livekit/protocol directly: protocol reorganised its auth package and the
+// AccessToken methods moved, whereas the SDK surface (NewAccessToken, ToJwt,
+// VideoGrant) is the documented stable contract.
 func (s *Service) Issue(identity, displayName string, grant Grant) (*Token, error) {
-	accessToken := auth.NewAccessToken(s.apiKey, s.apiSecret)
-	accessToken.SetIdentity(identity)
-	accessToken.SetName(displayName)
-	accessToken.SetTTL(int(TokenTTL.Seconds()))
-	accessToken.AddGrant(&livekit.VideoGrant{
+	accessToken := lksdk.NewAccessToken(s.apiKey, s.apiSecret, &lksdk.VideoGrant{
 		RoomJoin:       grant.RoomJoin,
 		Room:           grant.Room,
 		CanPublish:     grant.CanPublish,
 		CanSubscribe:   grant.CanSubscribe,
 		CanPublishData: grant.CanPublishData,
 	})
-	token, err := accessToken.ToJWT()
+	accessToken.SetIdentity(identity)
+	accessToken.SetName(displayName)
+	accessToken.SetTTL(int(TokenTTL.Seconds()))
+
+	token, err := accessToken.ToJwt()
 	if err != nil {
 		return nil, fmt.Errorf("mint livekit token: %w", err)
 	}
