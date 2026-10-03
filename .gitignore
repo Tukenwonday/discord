@@ -1,0 +1,37 @@
+# --- Go / backend build output ---
+backend/bin/
+backend/data/
+backend/uploads/
+backend/*.exe
+backend/cordis
+backend/cordis.exe
+
+# --- Node / frontend ---
+node_modules/
+desktop/dist/
+desktop/.vite/
+desktop/stats.html
+*.tsbuildinfo
+
+# --- Rust / Tauri ---
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# --- Environment files (never commit secrets) ---
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- Editors and OS ---
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# --- Logs and local data ---
+*.log
+npm-debug.log*
+yarn-error.log*

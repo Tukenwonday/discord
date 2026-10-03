@@ -1,0 +1,143 @@
+# ---------------------------------------------------------------------------
+# Cordis - full stack: Go API + WebSocket hub, PostgreSQL 16, Redis 7, LiveKit.
+#
+#   cp .env.example .env
+#   docker compose up -d --build
+#
+#   API      http://localhost:8080
+#   Health   http://localhost:8080/readyz
+#   LiveKit  ws://localhost:7880
+# ---------------------------------------------------------------------------
+
+name: cordis
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cordis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cordis}
+      POSTGRES_DB: ${POSTGRES_DB:-cordis}
+      TZ: ${TZ:-UTC}
+      PGTZ: ${TZ:-UTC}
+    # IP-ONLY: TODO - Postgres is deliberately NOT published to the host. It is
+    # reachable only from the backend container over the internal "cordis"
+    # network. Restore "5432:5432" when you move to a domain + private network.
+    volumes:
+      - cordis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # --username/-d default to POSTGRES_USER/POSTGRES_DB via the container env.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cordis} -d ${POSTGRES_DB:-cordis}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - cordis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # appendonly keeps refresh tokens and presence alive across restarts.
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    # IP-ONLY: TODO - Redis is deliberately NOT published to the host. Restore
+    # "6379:6379" when you move to a domain + private network.
+    volumes:
+      - cordis_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    networks:
+      - cordis
+
+  livekit-server:
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    # --dev runs an in-memory single node server with no TLS and a dev keypair.
+    command: --dev --bind 0.0.0.0
+    ports:
+      - "7880:7880" # websocket signalling
+      - "7881:7881" # ICE/UDP + TCP media
+      # IP-ONLY: TODO - 7882 (LiveKit admin HTTP API) is not published; nothing in
+      # the client or the backend needs it. 50000-60000/udp carries RTC media.
+      - "50000-60000:50000-60000/udp" # IP-ONLY: TODO - wide RTC media range
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7880/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - cordis
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      livekit-server:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      PORT: "8080"
+      GIN_MODE: ${GIN_MODE:-debug}
+      TZ: ${TZ:-UTC}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+      DATABASE_URL: postgres://${POSTGRES_USER:-cordis}:${POSTGRES_PASSWORD:-cordis}@postgres:5432/${POSTGRES_DB:-cordis}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      REDIS_CHANNEL: ${REDIS_CHANNEL:-cordis:events}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-min-32-characters-long}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
+      # IP-ONLY: TODO - default CORS is the wildcard so a bare-IP client works
+      # without a rebuild. Re-pin to explicit origins when a domain exists.
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      MAX_MESSAGE_LEN: ${MAX_MESSAGE_LEN:-4000}
+      # IP-ONLY: TODO - the advertised LiveKit URL must be reachable from the
+      # client machine, so it is the public IP rather than the compose hostname.
+      # wss:// is only correct once TLS terminates in front of LiveKit.
+      LIVEKIT_URL: ${LIVEKIT_URL:-ws://34.165.143.31:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
+      SELF_HOSTED_DOMAIN: ${SELF_HOSTED_DOMAIN:-http://localhost:5173}
+      UPLOAD_DRIVER: ${UPLOAD_DRIVER:-local}
+      UPLOAD_DIR: /app/data/uploads
+      UPLOAD_PUBLIC_BASE: ${UPLOAD_PUBLIC_BASE:-http://localhost:8080/uploads}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-cordis}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+    ports:
+      - "8080:8080"
+    volumes:
+      - cordis_uploads:/app/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - cordis
+
+volumes:
+  cordis_pgdata:
+  cordis_redisdata:
+  cordis_uploads:
+
+networks:
+  cordis:
+    driver: bridge

@@ -1,0 +1,30 @@
+# Build artefacts
+/cordis
+/out
+/bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Local uploads and data
+/data
+/uploads
+
+# Go tooling
+*.test
+*.out
+coverage.txt
+vendor/
+
+# Editors and OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Environment files must never enter the image
+.env
+.env.*
+!.env.example
