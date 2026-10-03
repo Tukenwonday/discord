@@ -5,11 +5,6 @@
 # upgrade itself and the base image has to match.
 FROM golang:1.23-alpine AS build
 
-# github.com/livekit/server-sdk-go resolves its own module through VCS and
-# shells out to git, which the alpine golang image does not ship. Without it the
-# build fails with: exec: "git": executable file not found in $PATH.
-RUN apk add --no-cache git
-
 WORKDIR /src
 
 # go.mod here lists direct dependencies only, and go.sum is generated rather than
