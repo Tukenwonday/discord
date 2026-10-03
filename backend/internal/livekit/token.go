@@ -48,6 +48,12 @@ func New(cfg config.LiveKit) *Service {
 // URL returns the LiveKit websocket endpoint advertised to clients.
 func (s *Service) URL() string { return s.url }
 
+// boolPtr converts a plain bool into the *bool that the generated grant fields
+// expect. Protobuf models these as optional, so an explicit false must be sent
+// as a pointer to false rather than an omitted field, which LiveKit would
+// otherwise read as "not granted".
+func boolPtr(v bool) *bool { return &v }
+
 // Issue mints a signed access token for a room.
 //
 // The grant type lives in the protocol's auth package (not the livekit package),
@@ -58,9 +64,9 @@ func (s *Service) Issue(identity, displayName string, grant Grant) (*Token, erro
 	at.SetVideoGrant(&auth.VideoGrant{
 		RoomJoin:       grant.RoomJoin,
 		Room:           grant.Room,
-		CanPublish:     grant.CanPublish,
-		CanSubscribe:   grant.CanSubscribe,
-		CanPublishData: grant.CanPublishData,
+		CanPublish:     boolPtr(grant.CanPublish),
+		CanSubscribe:   boolPtr(grant.CanSubscribe),
+		CanPublishData: boolPtr(grant.CanPublishData),
 	}).
 		SetIdentity(identity).
 		SetName(displayName).
