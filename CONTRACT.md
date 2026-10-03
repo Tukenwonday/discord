@@ -6,7 +6,7 @@ Do not invent alternative field names, envelope shapes, or event names.
 ## 1. Repository layout
 
 ```
-/backend                     Go 1.22 API + WebSocket + LiveKit + uploads (module github.com/cordis/backend)
+/backend                     Go 1.23 API + WebSocket + LiveKit + uploads (module github.com/cordis/backend)
 /desktop                     Tauri v2 + React 18 + TS + Vite + Tailwind + shadcn/ui
   /desktop/src-tauri         Rust shell (tray, notifications, updater, window, dialogs)
 /docker-compose.yml
@@ -515,7 +515,7 @@ src/main.rs  lib.rs  tray.rs  notifications.rs  updater.rs  window.rs  commands.
 built from the multi-stage Dockerfile, depending on the healthy services, published on 8080 and
 configured from `.env`.
 
-`backend/Dockerfile` builds with `golang:1.22-alpine` running
+`backend/Dockerfile` builds with `golang:1.23-alpine` running
 `CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cordis ./cmd/server`, and
 runs on `alpine:3.20` with `ca-certificates` and `tzdata`, a non-root `cordis` user owning
 `/app/data/uploads`, `EXPOSE 8080`, a `HEALTHCHECK` using

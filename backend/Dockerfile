@@ -1,6 +1,9 @@
 # Multi stage build: compile a static binary, then ship it on a minimal image
 # that only carries the certificate store and the timezone database.
-FROM golang:1.22-alpine AS build
+# The build stage needs Go 1.23+ because github.com/livekit/protocol declares
+# "go 1.23"; the official images pin GOTOOLCHAIN=local so the toolchain cannot
+# upgrade itself and the base image has to match.
+FROM golang:1.23-alpine AS build
 
 WORKDIR /src
 

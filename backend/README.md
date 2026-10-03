@@ -1,6 +1,6 @@
 # Cordis backend
 
-Go 1.22 API, WebSocket gateway, LiveKit token issuer and upload service for
+Go 1.23 API, WebSocket gateway, LiveKit token issuer and upload service for
 Cordis. The module implements `CONTRACT.md` sections 2 to 9 exactly: the same
 environment variables, JSON shapes, status codes, WebSocket events, permission
 bitmask and Redis key layout.
@@ -69,7 +69,7 @@ With Docker Compose at the repository root:
 docker compose up --build
 ```
 
-Locally, with Go 1.22 installed and Postgres and Redis reachable:
+Locally, with Go 1.23 installed and Postgres and Redis reachable:
 
 ```
 cd backend

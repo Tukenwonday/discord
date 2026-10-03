@@ -6,7 +6,7 @@ A Discord-style chat platform shipped as a **native Windows desktop application*
 |---|---|
 | Desktop shell | Tauri v2 (Rust) — WebView2, system tray, native notifications, auto-update, custom titlebar |
 | Frontend | React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Zustand + TanStack Query + React Router |
-| Backend | Go 1.22 — Gin, Gorilla WebSocket, GORM, JWT, bcrypt |
+| Backend | Go 1.23 — Gin, Gorilla WebSocket, GORM, JWT, bcrypt |
 | Realtime fan-out | Redis 7 Pub/Sub (multi-replica safe) |
 | Voice / Video | LiveKit (self-hosted) |
 | Database | PostgreSQL 16 |
@@ -52,7 +52,7 @@ A Discord-style chat platform shipped as a **native Windows desktop application*
 ### For local development
 | Tool | Version | Purpose |
 |---|---|---|
-| [Go](https://go.dev/dl/) | 1.22+ | backend |
+| [Go](https://go.dev/dl/) | 1.23+ | backend |
 | [Node.js](https://nodejs.org/) | 20 LTS or newer | frontend |
 | [Rust](https://rustup.rs) | stable, `*-msvc` toolchain | Tauri shell |
 | [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | "Desktop development with C++" workload | required by Rust on Windows |
